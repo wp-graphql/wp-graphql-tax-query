@@ -1,10 +1,10 @@
-#WPGraphQL Tax Query
+# WPGraphQL Tax Query
 
 This plugin adds Tax_Query support to the WP GraphQL Plugin for postObject query args (WP_Query). 
 
 ## Pre-req's
 Using this plugin requires having the <a href="https://github.com/wp-graphql/wp-graphql" target="_blank">WPGraphQL plugin</a> installed 
-and activated. 
+and activated. (version 0.0.15 or newer)
 
 ## Activating / Using
 Activate the plugin like you would any other WordPress plugin. 
