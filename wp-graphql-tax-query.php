@@ -2,10 +2,10 @@
 /**
  * Plugin Name: WP GraphQL Tax Query
  * Plugin URI: https://github.com/wp-graphql/wp-graphql-tax-query
- * Description: Tax_Query support for the WPGraphQL plugin
+ * Description: Tax_Query support for the WPGraphQL plugin. Requires WPGraphQL version 0.0.15 or newer.
  * Author: Digital First Media, Jason Bahl
  * Author URI: http://www.wpgraphql.com
- * Version: 0.0.1
+ * Version: 0.0.2
  * Text Domain: wp-graphql-tax-query
  * Requires at least: 4.7.0
  * Tested up to: 4.7.1
@@ -57,7 +57,7 @@ class TaxQuery {
 		 * Filter the query_args for the PostObjectQueryArgsType
 		 * @since 0.0.1
 		 */
-		add_filter( 'graphql_wp_query_input_fields', [ $this, 'add_input_fields' ], 10, 1 );
+		add_filter( 'graphql_queryArgs_fields', [ $this, 'add_input_fields' ], 10, 1 );
 
 		/**
 		 * Filter the $allowed_custom_args for the PostObjectsConnectionResolver to map the
@@ -79,7 +79,7 @@ class TaxQuery {
 
 		// Plugin version.
 		if ( ! defined( 'WPGRAPHQL_TAXQUERY_VERSION' ) ) {
-			define( 'WPGRAPHQL_TAXQUERY_VERSION', '0.0.1' );
+			define( 'WPGRAPHQL_TAXQUERY_VERSION', '0.0.2' );
 		}
 
 		// Plugin Folder Path.
@@ -190,11 +190,13 @@ class TaxQuery {
 				}
 			}
 			unset( $tax_query['taxArray'] );
+		} // End if().
 
-		}
 		if ( ! empty( $tax_query ) ) {
 			$query_args['tax_query'] = $tax_query;
 		}
+
+		unset( $query_args['taxQuery'] );
 
 		/**
 		 * Retrun the $query_args
