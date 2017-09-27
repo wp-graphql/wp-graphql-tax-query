@@ -184,6 +184,15 @@ class TaxQuery {
 						}
 					}
 
+					// Make "include_children => false" for performance reasons unless
+					// it is specifically requested (but one really shouldn't). See
+					// https://vip.wordpress.com/documentation/term-queries-should-consider-include_children-false/
+					$value['include_children'] = false;
+					if ( isset( $value['includeChildren'] ) ) {
+						$value['include_children'] = $value['includeChildren'];
+						unset( $value['includeChildren'] );
+					}
+
 					$tax_query[] = [
 						$tax_array_key => $value,
 					];

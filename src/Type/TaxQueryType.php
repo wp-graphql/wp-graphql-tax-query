@@ -83,7 +83,8 @@ class TaxQueryType extends WPInputObjectType {
 					'includeChildren' => [
 						'type'        => Types::boolean(),
 						'description' => __( 'Whether or not to include children for hierarchical 
-										taxonomies. Defaults to true', 'wp-graphql' ),
+										taxonomies. Defaults to false to improve performance (note that
+										this is opposite of the default for WP_Query).', 'wp-graphql' ),
 					],
 					'operator'        => [
 						'type' => new WPEnumType([
