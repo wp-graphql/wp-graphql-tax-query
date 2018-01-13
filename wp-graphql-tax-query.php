@@ -226,4 +226,4 @@ function graphql_init_tax_query() {
 	return new \WPGraphQL\TaxQuery();
 }
 
-add_action( 'graphql_generate_schema', '\WPGraphql\graphql_init_tax_query' );
+add_action( 'graphql_init', '\WPGraphql\graphql_init_tax_query' );
