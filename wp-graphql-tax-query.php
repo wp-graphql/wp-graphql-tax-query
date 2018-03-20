@@ -57,7 +57,7 @@ class TaxQuery {
 		 * Filter the query_args for the PostObjectQueryArgsType
 		 * @since 0.0.1
 		 */
-		add_filter( 'graphql_queryArgs_fields', [ $this, 'add_input_fields' ], 10, 1 );
+		add_filter( 'graphql_input_fields', [ $this, 'add_input_fields' ], 10, 3 );
 
 		/**
 		 * Filter the $allowed_custom_args for the PostObjectsConnectionResolver to map the
@@ -118,22 +118,18 @@ class TaxQuery {
 	 *
 	 * This adds the taxQuery input fields
 	 *
-	 * @param $fields
+	 * @param array $fields
+	 * @param string $type_name
+	 * @param array $config
 	 *
 	 * @return mixed
 	 * @since 0.0.1
 	 */
-	public function add_input_fields( $fields ) {
-
-		/**
-		 * TaxQuery $args
-		 * @see: https://codex.wordpress.org/Class_Reference/WP_Query#Taxonomy_Parameters
-		 * @since 0.0.1
-		 */
-		$fields['taxQuery'] = self::tax_query();
-
+	public function add_input_fields( $fields, $type_name, $config ) {
+		if ( isset( $config['queryClass'] ) && 'WP_Query' === $config['queryClass'] ) {
+			$fields['taxQuery'] = self::tax_query( $type_name );
+		}
 		return $fields;
-
 	}
 
 	/**
@@ -218,11 +214,12 @@ class TaxQuery {
 	/**
 	 * tax_query
 	 * This returns the definition for the TaxQueryType
+	 * @param string $type_name
 	 * @return TaxQueryType
 	 * @since 0.0.1
 	 */
-	public static function tax_query() {
-		return self::$tax_query ? : ( self::$tax_query = new TaxQueryType() );
+	public static function tax_query( $type_name ) {
+		return self::$tax_query[ $type_name ] ? : ( self::$tax_query[ $type_name ] = new TaxQueryType( $type_name ) );
 	}
 
 }
@@ -235,4 +232,4 @@ function graphql_init_tax_query() {
 	return new \WPGraphQL\TaxQuery();
 }
 
-add_action( 'graphql_generate_schema', '\WPGraphql\graphql_init_tax_query' );
+add_action( 'graphql_init', '\WPGraphql\graphql_init_tax_query' );

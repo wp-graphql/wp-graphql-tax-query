@@ -8,15 +8,16 @@ use WPGraphQL\Types;
 class TaxQueryType extends WPInputObjectType {
 
 	protected static $fields;
+	protected static $tax_array;
 
 	/**
 	 * TaxQueryType constructor.
 	 */
-	public function __construct() {
+	public function __construct( $type_name ) {
 		$config = [
-			'name'        => 'taxQuery',
+			'name'        => $type_name . 'TaxQuery',
 			'description' => __( 'Query objects based on taxonomy parameters', 'wp-graphql' ),
-			'fields'      => self::fields(),
+			'fields'      => self::fields( $type_name ),
 		];
 		parent::__construct( $config );
 	}
@@ -24,99 +25,103 @@ class TaxQueryType extends WPInputObjectType {
 	/**
 	 * @return array|null
 	 */
-	protected static function fields() {
+	protected static function fields( $type_name ) {
 
-		if ( null === self::$fields ) :
+		if ( empty( self::$fields[ $type_name ] ) ) :
 
-			self::$fields = [
+			self::$fields[ $type_name ] = [
 				'relation' => [
 					'type' => Types::relation_enum(),
 				],
-				'taxArray' => Types::list_of( self::tax_array() ),
+				'taxArray' => Types::list_of( self::tax_array( $type_name ) ),
 			];
 
 		endif;
-		return ! empty( self::$fields ) ? self::$fields : null;
+		return ! empty( self::$fields[ $type_name ] ) ? self::$fields[ $type_name ] : null;
 	}
 
 	/**
 	 * @return WPInputObjectType
 	 */
-	protected static function tax_array() {
+	protected static function tax_array( $type_name ) {
 
-		return new WPInputObjectType( [
-			'name'   => 'taxArray',
-			'fields' => function() {
-				$fields = [
-					'taxonomy'        => [
-						'name' => 'taxonomy',
-						'type' => Types::taxonomy_enum(),
-					],
-					'field'           => [
-						'type' => new WPEnumType([
-							'name' => 'taxQueryField',
-							'description' => __( 'Which field to select taxonomy term by. Default value is "term_id"', 'wp-graphql' ),
-							'values' => [
-								[
-									'name'  => 'ID',
-									'value' => 'term_id',
+		if ( empty( self::$tax_array[ $type_name ] ) ) {
+			self::$tax_array[ $type_name ] = new WPInputObjectType( [
+				'name'   => $type_name . 'TaxArray',
+				'fields' => function() use ( $type_name ) {
+					$fields = [
+						'taxonomy'        => [
+							'name' => 'taxonomy',
+							'type' => Types::taxonomy_enum(),
+						],
+						'field'           => [
+							'type' => new WPEnumType( [
+								'name'        => $type_name . 'TaxQueryField',
+								'description' => __( 'Which field to select taxonomy term by. Default value is "term_id"', 'wp-graphql' ),
+								'values'      => [
+									'ID'          => [
+										'name'  => 'ID',
+										'value' => 'term_id',
+									],
+									'NAME'        => [
+										'name'  => 'NAME',
+										'value' => 'name',
+									],
+									'SLUG'        => [
+										'name'  => 'SLUG',
+										'value' => 'slug',
+									],
+									'TAXONOMY_ID' => [
+										'name'  => 'TAXONOMY_ID',
+										'value' => 'term_taxonomy_id',
+									],
 								],
-								[
-									'name'  => 'NAME',
-									'value' => 'name',
+							] ),
+						],
+						'terms'           => [
+							'type'        => Types::list_of( Types::string() ),
+							'description' => __( 'A list of term slugs', 'wp-graphql' ),
+						],
+						'includeChildren' => [
+							'type'        => Types::boolean(),
+							'description' => __( 'Whether or not to include children for hierarchical 
+											taxonomies. Defaults to false to improve performance (note that
+											this is opposite of the default for WP_Query).', 'wp-graphql' ),
+						],
+						'operator'        => [
+							'type' => new WPEnumType( [
+								'name'   => $type_name . 'TaxQueryOperator',
+								'values' => [
+									'IN'         => [
+										'name'  => 'IN',
+										'value' => 'IN',
+									],
+									'NOT_IN'     => [
+										'name'  => 'NOT_IN',
+										'value' => 'NOT IN',
+									],
+									'AND'        => [
+										'name'  => 'AND',
+										'value' => 'AND',
+									],
+									'EXISTS'     => [
+										'name'  => 'EXISTS',
+										'value' => 'EXISTS',
+									],
+									'NOT_EXISTS' => [
+										'name'  => 'NOT_EXISTS',
+										'value' => 'NOT EXISTS',
+									],
 								],
-								[
-									'name'  => 'SLUG',
-									'value' => 'slug',
-								],
-								[
-									'name'  => 'TAXONOMY_ID',
-									'value' => 'term_taxonomy_id',
-								],
-							],
-						]),
-					],
-					'terms'           => [
-						'type'        => Types::list_of( Types::string() ),
-						'description' => __( 'A list of term slugs', 'wp-graphql' ),
-					],
-					'includeChildren' => [
-						'type'        => Types::boolean(),
-						'description' => __( 'Whether or not to include children for hierarchical 
-										taxonomies. Defaults to false to improve performance (note that
-										this is opposite of the default for WP_Query).', 'wp-graphql' ),
-					],
-					'operator'        => [
-						'type' => new WPEnumType([
-							'name' => 'taxQueryOperator',
-							'values' => [
-								[
-									'name'  => 'IN',
-									'value' => 'IN',
-								],
-								[
-									'name'  => 'NOT_IN',
-									'value' => 'NOT IN',
-								],
-								[
-									'name'  => 'AND',
-									'value' => 'AND',
-								],
-								[
-									'name'  => 'EXISTS',
-									'value' => 'EXISTS',
-								],
-								[
-									'name'  => 'NOT_EXISTS',
-									'value' => 'NOT EXISTS',
-								],
-							],
-						]),
-					],
-				];
-				return $fields;
-			},
-		] );
+							] ),
+						],
+					];
+
+					return $fields;
+				},
+			] );
+		}
+		return ! empty( self::$tax_array[ $type_name ] ) ? self::$tax_array[ $type_name ] : null;
 
 	}
 }
