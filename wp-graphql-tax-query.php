@@ -219,7 +219,10 @@ class TaxQuery {
 	 * @since 0.0.1
 	 */
 	public static function tax_query( $type_name ) {
-		return self::$tax_query[ $type_name ] ? : ( self::$tax_query[ $type_name ] = new TaxQueryType( $type_name ) );
+		if ( empty( self::$tax_query[ $type_name ] ) ) {
+			self::$tax_query[ $type_name ] = new TaxQueryType( $type_name );
+		}
+		return ! empty( self::$tax_query[ $type_name ] ) ? self::$tax_query[ $type_name ] : null;
 	}
 
 }
