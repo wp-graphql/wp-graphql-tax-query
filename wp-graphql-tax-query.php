@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: WP GraphQL Tax Query
+ * Plugin Name: WPGraphQL Tax Query
  * Plugin URI: https://github.com/wp-graphql/wp-graphql-tax-query
- * Description: Tax_Query support for the WPGraphQL plugin. Requires WPGraphQL version 0.0.15 or newer.
- * Author: Digital First Media, Jason Bahl
- * Author URI: http://www.wpgraphql.com
- * Version: 0.0.2
+ * Description: Tax_Query support for the WPGraphQL plugin. Requires WPGraphQL version 0.4.0 or newer.
+ * Author: WPGraphQL, Jason Bahl
+ * Author URI: https://www.wpgraphql.com
+ * Version: 0.1.0
  * Text Domain: wp-graphql-tax-query
  * Requires at least: 4.7.0
  * Tested up to: 4.7.1
@@ -13,16 +13,17 @@
  * @package WPGraphQLTaxQuery
  * @category Core
  * @author Digital First Media, Jason Bahl
- * @version 0.0.5
+ * @version 0.1.0
  */
 namespace WPGraphQL;
 
 // Exit if accessed directly.
+use WPGraphQL\Registry\TypeRegistry;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use WPGraphQL\TaxQuery\Type\TaxQueryType;
 
 class TaxQuery {
 
@@ -57,7 +58,7 @@ class TaxQuery {
 		 * Filter the query_args for the PostObjectQueryArgsType
 		 * @since 0.0.1
 		 */
-		add_filter( 'graphql_input_fields', [ $this, 'add_input_fields' ], 10, 3 );
+		add_filter( 'graphql_input_fields', [ $this, 'add_input_fields' ], 10, 4 );
 
 		/**
 		 * Filter the $allowed_custom_args for the PostObjectsConnectionResolver to map the
@@ -79,7 +80,7 @@ class TaxQuery {
 
 		// Plugin version.
 		if ( ! defined( 'WPGRAPHQL_TAXQUERY_VERSION' ) ) {
-			define( 'WPGRAPHQL_TAXQUERY_VERSION', '0.0.2' );
+			define( 'WPGRAPHQL_TAXQUERY_VERSION', '0.1.0' );
 		}
 
 		// Plugin Folder Path.
@@ -118,18 +119,117 @@ class TaxQuery {
 	 *
 	 * This adds the taxQuery input fields
 	 *
-	 * @param array $fields
-	 * @param string $type_name
-	 * @param array $config
+	 * @param array        $fields
+	 * @param string       $type_name
+	 * @param array        $config
+	 * @param TypeRegistry $type_registry
 	 *
 	 * @return mixed
 	 * @since 0.0.1
+	 * @throws \Exception
 	 */
-	public function add_input_fields( $fields, $type_name, $config ) {
+	public function add_input_fields( $fields, $type_name, $config, $type_registry ) {
+
 		if ( isset( $config['queryClass'] ) && 'WP_Query' === $config['queryClass'] ) {
-			$fields['taxQuery'] = self::tax_query( $type_name );
+
+			$this->register_types( $type_name, $type_registry );
+			$fields['taxQuery'] = [
+				'type' => $type_name . 'TaxQuery'
+			];
 		}
 		return $fields;
+	}
+
+	/**
+	 * @param              $type_name
+	 * @param TypeRegistry $type_registry
+	 *
+	 * @throws \Exception
+	 */
+	public function register_types( $type_name, TypeRegistry $type_registry ) {
+
+		$type_registry->register_enum_type( $type_name . 'TaxQueryField', [
+			'description' => __( 'Which field to select taxonomy term by. Default value is "term_id"', 'wp-graphql' ),
+			'values'      => [
+				'ID'          => [
+					'name'  => 'ID',
+					'value' => 'term_id',
+				],
+				'NAME'        => [
+					'name'  => 'NAME',
+					'value' => 'name',
+				],
+				'SLUG'        => [
+					'name'  => 'SLUG',
+					'value' => 'slug',
+				],
+				'TAXONOMY_ID' => [
+					'name'  => 'TAXONOMY_ID',
+					'value' => 'term_taxonomy_id',
+				],
+			],
+		] );
+
+		$type_registry->register_enum_type( $type_name . 'TaxQueryOperator', [
+			'values' => [
+				'IN'         => [
+					'name'  => 'IN',
+					'value' => 'IN',
+				],
+				'NOT_IN'     => [
+					'name'  => 'NOT_IN',
+					'value' => 'NOT IN',
+				],
+				'AND'        => [
+					'name'  => 'AND',
+					'value' => 'AND',
+				],
+				'EXISTS'     => [
+					'name'  => 'EXISTS',
+					'value' => 'EXISTS',
+				],
+				'NOT_EXISTS' => [
+					'name'  => 'NOT_EXISTS',
+					'value' => 'NOT EXISTS',
+				],
+			],
+		] );
+
+		$type_registry->register_input_type( $type_name . 'TaxArray', [
+			'fields' => [
+				'taxonomy'        => [
+					'type' => 'TaxonomyEnum',
+				],
+				'field'           => [
+					'type' => $type_name . 'TaxQueryField',
+				],
+				'terms'           => [
+					'type'        => [ 'list_of' => 'String' ],
+					'description' => __( 'A list of term slugs', 'wp-graphql' ),
+				],
+				'includeChildren' => [
+					'type'        => 'Boolean',
+					'description' => __( 'Whether or not to include children for hierarchical taxonomies. Defaults to false to improve performance (note that this is opposite of the default for WP_Query).', 'wp-graphql' ),
+				],
+				'operator'        => [
+					'type' => $type_name . 'TaxQueryOperator',
+				],
+			]
+		] );
+
+		$type_registry->register_input_type( $type_name . 'TaxQuery', [
+			'description' => __( 'Query objects based on taxonomy parameters', 'wp-graphql' ),
+			'fields'      => [
+				'relation' => [
+					'type' => 'RelationEnum',
+				],
+				'taxArray' => [
+					'type' => [
+						'list_of' => $type_name . 'TaxArray',
+					],
+				],
+			],
+		] );
 	}
 
 	/**
@@ -211,20 +311,6 @@ class TaxQuery {
 
 	}
 
-	/**
-	 * tax_query
-	 * This returns the definition for the TaxQueryType
-	 * @param string $type_name
-	 * @return TaxQueryType
-	 * @since 0.0.1
-	 */
-	public static function tax_query( $type_name ) {
-		if ( empty( self::$tax_query[ $type_name ] ) ) {
-			self::$tax_query[ $type_name ] = new TaxQueryType( $type_name );
-		}
-		return ! empty( self::$tax_query[ $type_name ] ) ? self::$tax_query[ $type_name ] : null;
-	}
-
 }
 
 /**
@@ -232,7 +318,7 @@ class TaxQuery {
  * @return TaxQuery
  */
 function graphql_init_tax_query() {
-	return new \WPGraphQL\TaxQuery();
+	return new TaxQuery();
 }
 
-add_action( 'graphql_init', '\WPGraphql\graphql_init_tax_query' );
+add_action( 'graphql_register_types', '\WPGraphql\graphql_init_tax_query' );
