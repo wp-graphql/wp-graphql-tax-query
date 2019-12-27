@@ -261,7 +261,7 @@ class TaxQuery {
 
 				// If less than 2 taxArray objects were passed through, we don't need the "relation" field
 				// to be passed to WP_Query, so we'll unset it now
-				if ( 2 < count( $tax_query['taxArray'] ) ) {
+				if ( 2 > count( $tax_query['taxArray'] ) ) {
 					unset( $tax_query['relation'] );
 				}
 
