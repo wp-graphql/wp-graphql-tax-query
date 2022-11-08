@@ -5,7 +5,7 @@
  * Description: Tax_Query support for the WPGraphQL plugin. Requires WPGraphQL version 0.4.0 or newer.
  * Author: WPGraphQL, Jason Bahl
  * Author URI: https://www.wpgraphql.com
- * Version: 0.1.0
+ * Version: 0.2.0
  * Text Domain: wp-graphql-tax-query
  * Requires at least: 4.7.0
  * Tested up to: 4.7.1
