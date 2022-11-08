@@ -275,7 +275,7 @@ class TaxQuery {
 						if ( ! empty( $value['field'] ) && ( 'term_id' === $value['field'] || 'term_taxonomy_id' === $value['field'] ) ) {
 							$formatted_terms = [];
 							foreach ( $value['terms'] as $term ) {
-								$formatted_terms = intval( $term );
+								$formatted_terms[] = intval( $term );
 							}
 							$value['terms'] = $formatted_terms;
 						}
