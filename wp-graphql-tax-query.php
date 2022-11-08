@@ -290,9 +290,7 @@ class TaxQuery {
 						unset( $value['includeChildren'] );
 					}
 
-					$tax_query[] = [
-						$tax_array_key => $value,
-					];
+					$tax_query[ $tax_array_key ] = $value;
 				}
 			}
 			unset( $tax_query['taxArray'] );
