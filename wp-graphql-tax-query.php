@@ -54,6 +54,9 @@ class TaxQuery {
 		 */
 		$this->includes();
 
+		// Register Tax Query Types
+		add_action( get_graphql_register_action(), [ $this, 'register_types' ], 10, 1 );
+
 		/**
 		 * Filter the query_args for the PostObjectQueryArgsType
 		 * @since 0.0.1
@@ -131,24 +134,22 @@ class TaxQuery {
 	public function add_input_fields( $fields, $type_name, $config, $type_registry ) {
 
 		if ( isset( $config['queryClass'] ) && 'WP_Query' === $config['queryClass'] ) {
-
-			$this->register_types( $type_name, $type_registry );
 			$fields['taxQuery'] = [
-				'type' => $type_name . 'TaxQuery'
+				'type' => 'TaxQuery'
 			];
 		}
+
 		return $fields;
 	}
 
 	/**
-	 * @param              $type_name
 	 * @param TypeRegistry $type_registry
 	 *
 	 * @throws \Exception
 	 */
-	public function register_types( $type_name, TypeRegistry $type_registry ) {
+	public function register_types( TypeRegistry $type_registry ) {
 
-		$type_registry->register_enum_type( $type_name . 'TaxQueryField', [
+		$type_registry->register_enum_type( 'TaxQueryField', [
 			'description' => __( 'Which field to select taxonomy term by. Default value is "term_id"', 'wp-graphql' ),
 			'values'      => [
 				'ID'          => [
@@ -170,7 +171,7 @@ class TaxQuery {
 			],
 		] );
 
-		$type_registry->register_enum_type( $type_name . 'TaxQueryOperator', [
+		$type_registry->register_enum_type( 'TaxQueryOperator', [
 			'values' => [
 				'IN'         => [
 					'name'  => 'IN',
@@ -195,13 +196,13 @@ class TaxQuery {
 			],
 		] );
 
-		$type_registry->register_input_type( $type_name . 'TaxArray', [
+		$type_registry->register_input_type( 'TaxArray', [
 			'fields' => [
 				'taxonomy'        => [
 					'type' => 'TaxonomyEnum',
 				],
 				'field'           => [
-					'type' => $type_name . 'TaxQueryField',
+					'type' => 'TaxQueryField',
 				],
 				'terms'           => [
 					'type'        => [ 'list_of' => 'String' ],
@@ -212,12 +213,12 @@ class TaxQuery {
 					'description' => __( 'Whether or not to include children for hierarchical taxonomies. Defaults to false to improve performance (note that this is opposite of the default for WP_Query).', 'wp-graphql' ),
 				],
 				'operator'        => [
-					'type' => $type_name . 'TaxQueryOperator',
+					'type' => 'TaxQueryOperator',
 				],
 			]
 		] );
 
-		$type_registry->register_input_type( $type_name . 'TaxQuery', [
+		$type_registry->register_input_type( 'TaxQuery', [
 			'description' => __( 'Query objects based on taxonomy parameters', 'wp-graphql' ),
 			'fields'      => [
 				'relation' => [
@@ -225,7 +226,7 @@ class TaxQuery {
 				],
 				'taxArray' => [
 					'type' => [
-						'list_of' => $type_name . 'TaxArray',
+						'list_of' => 'TaxArray',
 					],
 				],
 			],
